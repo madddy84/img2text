@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+</head>
+
+<script>
+
+    function onload() {
+        var fileInput = document.getElementById("files");
+        fileInput.addEventListener("change", function () {
+            window.filesList = this.files;
+        });
+
+        window.addEventListener('paste', e => {
+            window.filesList = e.clipboardData.files;
+            onGetText();
+        });
+    }
+
+    function onGetText() {
+        const statusEl = document.getElementById("status");
+        const worker = Tesseract.createWorker({
+            logger: function name(params) {
+                statusEl.innerHTML = `${params.status} ${Math.floor(params.progress * 100)}`;
+            }
+        });
+        (async () => {
+            await worker.load();
+            await worker.loadLanguage('eng');
+            await worker.initialize('eng');
+            const { data: { text } } = await worker.recognize(window.filesList[0]);
+            document.getElementById("textResult").value = text.toUpperCase();
+            await worker.terminate();
+        })();
+    }
+</script>
+<style>
+    textarea {
+        width: 100%;
+        height: calc(100vh - 194px);
+    }
+</style>
+
+<body onload="onload()">
+    <h1>Image to text</h1>
+    <input id="files" type="file">
+    <br />
+    <br />
+    <button id="imgFile" mat-button onclick="onGetText()">Convert</button>
+    <br />
+    Status: <label id="status"></label>
+    <br />
+    <br />
+
+    <textarea id="textResult"></textarea>
+</body>
+
+</html>
